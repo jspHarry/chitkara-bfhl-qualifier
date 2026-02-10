@@ -83,51 +83,31 @@ function fibonacciArray(n) {
   return arr;
 }
 
-// AI integration (OpenAI ChatCompletion)
 async function askAI_singleWord(question) {
   if (!OPENAI_KEY) throw new Error('No AI key configured');
 
-  // sanitize question (strip control chars, length cap)
-  let q = String(question || '').replace(/[\u0000-\u001F]+/g, ' ').trim();
-  if (q.length === 0) throw new Error('Empty AI question');
-  if (q.length > 1000) q = q.slice(0, 1000);
-
-  // system prompt enforces single word
-  const systemPrompt = `You are a concise assistant. Answer with exactly one single English word (no punctuation, no explanation). If multiple words might be valid, choose the most appropriate single word. Return only that one word.`;
-
-  // call OpenAI Chat Completions (gpt-3.5/4 style)
-  const payload = {
-    model: 'gpt-3.5-turbo',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: `Question: ${q}` }
-    ],
-    max_tokens: 6,
-    temperature: 0.0,
-    n: 1,
-  };
-
-  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_KEY}`,
+      'Authorization': `Bearer ${OPENAI_KEY}`
     },
-    body: JSON.stringify(payload),
-    timeout: 10000,
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      input: `Answer in exactly one English word only. No punctuation. Question: ${question}`,
+      max_output_tokens: 5
+    })
   });
 
-  if (!resp.ok) {
-    const txt = await resp.text();
-    throw new Error('AI provider error: ' + resp.status + ' ' + txt);
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text);
   }
 
-  const j = await resp.json();
-  const content = j?.choices?.[0]?.message?.content || '';
-  // extract first token/word
-  const firstWord = content.trim().split(/\s+/)[0] || '';
-  // sanitize: remove punctuation at ends
-  return firstWord.replace(/^[^\w]+|[^\w]+$/g, '');
+  const data = await response.json();
+  const text = data.output[0].content[0].text;
+
+  return text.trim().split(/\s+/)[0];
 }
 
 // /health endpoint
