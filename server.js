@@ -166,7 +166,7 @@ app.post('/bfhl', async (req, res) => {
         if (!isInteger(v) || !isSafeNumber(v)) return sendError(res, 422, 'hcf array must contain safe integers', 'hcf_bad_value');
         g = gcd(g, v);
       }
-      return res.json({ is_success: true, official_email: OFFICIAL_EMAIL, data: g.join(",") });
+      return res.json({ is_success: true, official_email: OFFICIAL_EMAIL, data: g });
     }
 
     if (key === 'lcm') {
@@ -182,7 +182,7 @@ app.post('/bfhl', async (req, res) => {
         current = lcm_two(current, v);
         if (!isSafeNumber(current) || !isFinite(current)) return sendError(res, 422, 'lcm overflow or too large', 'lcm_overflow');
       }
-      return res.json({ is_success: true, official_email: OFFICIAL_EMAIL, data: current.join(",") });
+      return res.json({ is_success: true, official_email: OFFICIAL_EMAIL, data: current });
     }
 
     if (key === 'AI') {
