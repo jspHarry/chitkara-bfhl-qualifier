@@ -87,13 +87,11 @@ async function askAI_singleWord(question) {
   const GEMINI_KEY = process.env.GEMINI_API_KEY;
   if (!GEMINI_KEY) throw new Error("No Gemini key configured");
 
-  // sanitize input
   let q = String(question || "").replace(/[\u0000-\u001F]+/g, " ").trim();
-  if (q.length === 0) throw new Error("Empty question");
-  if (q.length > 1000) q = q.slice(0, 1000);
+  if (!q) throw new Error("Empty question");
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -106,7 +104,11 @@ async function askAI_singleWord(question) {
               }
             ]
           }
-        ]
+        ],
+        generationConfig: {
+          maxOutputTokens: 5,
+          temperature: 0
+        }
       })
     }
   );
@@ -117,7 +119,8 @@ async function askAI_singleWord(question) {
   }
 
   const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  const text =
+    data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
   return text.trim().split(/\s+/)[0];
 }
