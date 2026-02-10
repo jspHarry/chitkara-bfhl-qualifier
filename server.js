@@ -84,20 +84,32 @@ function fibonacciArray(n) {
 }
 
 async function askAI_singleWord(question) {
-  if (!OPENAI_KEY) throw new Error('No AI key configured');
+  const GEMINI_KEY = process.env.GEMINI_API_KEY;
+  if (!GEMINI_KEY) throw new Error("No Gemini key configured");
 
-  const response = await fetch('https://api.openai.com/v1/responses', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_KEY}`
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      input: `Answer in exactly one English word only. No punctuation. Question: ${question}`,
-      max_output_tokens: 5
-    })
-  });
+  // sanitize input
+  let q = String(question || "").replace(/[\u0000-\u001F]+/g, " ").trim();
+  if (q.length === 0) throw new Error("Empty question");
+  if (q.length > 1000) q = q.slice(0, 1000);
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: `Answer in exactly ONE English word only. No punctuation. Question: ${q}`
+              }
+            ]
+          }
+        ]
+      })
+    }
+  );
 
   if (!response.ok) {
     const text = await response.text();
@@ -105,10 +117,11 @@ async function askAI_singleWord(question) {
   }
 
   const data = await response.json();
-  const text = data.output[0].content[0].text;
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
   return text.trim().split(/\s+/)[0];
 }
+
 
 // /health endpoint
 app.get('/health', (req, res) => {
