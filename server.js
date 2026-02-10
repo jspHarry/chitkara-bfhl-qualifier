@@ -85,44 +85,47 @@ function fibonacciArray(n) {
 
 async function askAI_singleWord(question) {
   const HF_KEY = process.env.HF_API_KEY;
-  if (!HF_KEY) throw new Error("No Hugging Face API key!");
+  if (!HF_KEY) throw new Error("No Hugging Face API key configured");
 
-  let prompt = `Answer with EXACTLY one English word only (no punctuation): ${question}`;
+  let q = String(question || "").replace(/[\u0000-\u001F]+/g, " ").trim();
+  if (!q) throw new Error("Empty question");
 
-  const resp = await fetch(
-    "https://api-inference.huggingface.co/models/google/flan-t5-small",
+  const prompt = `Answer with EXACTLY one English word only (no punctuation): ${q}`;
+
+  const response = await fetch(
+    "https://router.huggingface.co/hf-inference/models/google/flan-t5-small",
     {
       method: "POST",
       headers: {
         Authorization: `Bearer ${HF_KEY}`,
-        "Content-Type": "application/json",
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify({ inputs: prompt }),
+      body: JSON.stringify({
+        inputs: prompt
+      })
     }
   );
 
-  if (!resp.ok) {
-    const text = await resp.text();
+  if (!response.ok) {
+    const text = await response.text();
     throw new Error("HF error: " + text);
   }
 
-  const data = await resp.json();
-  let text = "";
+  const data = await response.json();
 
-  // Some models return an array of tokens or text; normalize safely
-  if (typeof data === "string") {
-    text = data;
-  } else if (Array.isArray(data) && data[0]?.generated_text) {
-    text = data[0].generated_text;
+  let output = "";
+
+  if (Array.isArray(data) && data[0]?.generated_text) {
+    output = data[0].generated_text;
   } else if (data?.generated_text) {
-    text = data.generated_text;
+    output = data.generated_text;
   } else {
-    text = JSON.stringify(data);
+    output = JSON.stringify(data);
   }
 
-  // take first token (single word)
-  return String(text).trim().split(/\s+/)[0];
+  return output.trim().split(/\s+/)[0];
 }
+
 
 
 
