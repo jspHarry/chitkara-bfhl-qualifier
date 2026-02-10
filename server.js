@@ -82,47 +82,48 @@ function fibonacciArray(n) {
   }
   return arr;
 }
+
 async function askAI_singleWord(question) {
-  const GEMINI_KEY = process.env.GEMINI_API_KEY;
-  if (!GEMINI_KEY) throw new Error("No Gemini key configured");
+  const HF_KEY = process.env.HF_API_KEY;
+  if (!HF_KEY) throw new Error("No Hugging Face API key!");
 
-  let q = String(question || "").replace(/[\u0000-\u001F]+/g, " ").trim();
-  if (!q) throw new Error("Empty question");
+  let prompt = `Answer with EXACTLY one English word only (no punctuation): ${question}`;
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_KEY}`,
+  const resp = await fetch(
+    "https://api-inference.huggingface.co/models/google/flan-t5-small",
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: `Answer in exactly ONE English word only. No punctuation. Question: ${q}`
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          maxOutputTokens: 5,
-          temperature: 0
-        }
-      })
+      headers: {
+        Authorization: `Bearer ${HF_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ inputs: prompt }),
     }
   );
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text);
+  if (!resp.ok) {
+    const text = await resp.text();
+    throw new Error("HF error: " + text);
   }
 
-  const data = await response.json();
-  const text =
-    data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  const data = await resp.json();
+  let text = "";
 
-  return text.trim().split(/\s+/)[0];
+  // Some models return an array of tokens or text; normalize safely
+  if (typeof data === "string") {
+    text = data;
+  } else if (Array.isArray(data) && data[0]?.generated_text) {
+    text = data[0].generated_text;
+  } else if (data?.generated_text) {
+    text = data.generated_text;
+  } else {
+    text = JSON.stringify(data);
+  }
+
+  // take first token (single word)
+  return String(text).trim().split(/\s+/)[0];
 }
+
 
 
 // /health endpoint
