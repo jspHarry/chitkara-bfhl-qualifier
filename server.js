@@ -137,7 +137,7 @@ app.post('/bfhl', async (req, res) => {
       if (!isInteger(n) || n < 0) return sendError(res, 422, 'fibonacci must be a non-negative integer', 'invalid_fibonacci');
       if (n > FIB_MAX_N) return sendError(res, 413, `fibonacci n too large; max ${FIB_MAX_N}`, 'fibonacci_too_large');
       const arr = fibonacciArray(n);
-      return res.json({ is_success: true, official_email: OFFICIAL_EMAIL, data: arr });
+      return res.json({ is_success: true, official_email: OFFICIAL_EMAIL, data: arr.join(",") });
     }
 
     if (key === 'prime') {
@@ -149,7 +149,7 @@ app.post('/bfhl', async (req, res) => {
         if (typeof x !== 'number' || !isInteger(x) || !isSafeNumber(x)) return sendError(res, 422, 'prime array must contain safe integers', 'prime_bad_value');
         if (isPrime(x)) out.push(x);
       }
-      return res.json({ is_success: true, official_email: OFFICIAL_EMAIL, data: out });
+      return res.json({ is_success: true, official_email: OFFICIAL_EMAIL, data: out.join(",") });
     }
 
     if (key === 'hcf') {
@@ -163,7 +163,7 @@ app.post('/bfhl', async (req, res) => {
         if (!isInteger(v) || !isSafeNumber(v)) return sendError(res, 422, 'hcf array must contain safe integers', 'hcf_bad_value');
         g = gcd(g, v);
       }
-      return res.json({ is_success: true, official_email: OFFICIAL_EMAIL, data: g });
+      return res.json({ is_success: true, official_email: OFFICIAL_EMAIL, data: g.join(",") });
     }
 
     if (key === 'lcm') {
@@ -179,7 +179,7 @@ app.post('/bfhl', async (req, res) => {
         current = lcm_two(current, v);
         if (!isSafeNumber(current) || !isFinite(current)) return sendError(res, 422, 'lcm overflow or too large', 'lcm_overflow');
       }
-      return res.json({ is_success: true, official_email: OFFICIAL_EMAIL, data: current });
+      return res.json({ is_success: true, official_email: OFFICIAL_EMAIL, data: current.join(",") });
     }
 
     if (key === 'AI') {
