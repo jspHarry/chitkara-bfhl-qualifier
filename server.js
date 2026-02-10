@@ -82,7 +82,6 @@ function fibonacciArray(n) {
   }
   return arr;
 }
-
 async function askAI_singleWord(question) {
   const GEMINI_KEY = process.env.GEMINI_API_KEY;
   if (!GEMINI_KEY) throw new Error("No Gemini key configured");
@@ -91,7 +90,7 @@ async function askAI_singleWord(question) {
   if (!q) throw new Error("Empty question");
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_KEY}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
