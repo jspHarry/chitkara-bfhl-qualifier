@@ -101,7 +101,10 @@ async function askAI_singleWord(question) {
 
   const text = await response.text();
 
-  return text.trim().split(/\s+/)[0];
+  let word = text.trim().split(/\s+/)[0];
+  word = word.replace(/^[^\w]+|[^\w]+$/g, "");
+
+  return word;
 }
 
 
